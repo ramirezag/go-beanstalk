@@ -85,7 +85,7 @@ func (t *Tube) Kick(bound int) (n int, err error) {
 
 // Stats retrieves statistics about tube t.
 func (t *Tube) Stats() (map[string]string, error) {
-	r, err := t.Conn.cmd(nil, nil, nil, "stats-tube", t.Name)
+	r, err := t.Conn.cmd(t, nil, nil, "stats-tube", t.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (t *Tube) Stats() (map[string]string, error) {
 
 // Pause pauses new reservations in t for time d.
 func (t *Tube) Pause(d time.Duration) error {
-	r, err := t.Conn.cmd(nil, nil, nil, "pause-tube", t.Name, dur(d))
+	r, err := t.Conn.cmd(t, nil, nil, "pause-tube", t.Name, dur(d))
 	if err != nil {
 		return err
 	}
@@ -104,4 +104,16 @@ func (t *Tube) Pause(d time.Duration) error {
 		return err
 	}
 	return nil
+}
+
+// Bury places the given job in a holding area in the job's tube and
+// sets its priority to pri. The job will not be scheduled again until it
+// has been kicked; see also the documentation of Kick.
+func (t *Tube) Bury(id uint64, pri uint32) error {
+	r, err := t.Conn.cmd(t, nil, nil, "bury", id, pri)
+	if err != nil {
+		return err
+	}
+	_, err = t.Conn.readResp(r, false, "BURIED")
+	return err
 }
