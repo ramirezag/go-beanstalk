@@ -110,10 +110,38 @@ func (t *Tube) Pause(d time.Duration) error {
 // sets its priority to pri. The job will not be scheduled again until it
 // has been kicked; see also the documentation of Kick.
 func (t *Tube) Bury(id uint64, pri uint32) error {
-	r, err := t.Conn.cmd(t, nil, nil, "bury", id, pri)
-	if err != nil {
-		return err
-	}
-	_, err = t.Conn.readResp(r, false, "BURIED")
-	return err
+    r, err := t.Conn.cmd(t, nil, nil, "bury", id, pri)
+    if err != nil {
+        return err
+    }
+    _, err = t.Conn.readResp(r, false, "BURIED")
+    return err
+}
+
+// Reserve reserves and returns a job from one of the tubes in t. If no
+// job is available before time timeout has passed, Reserve returns a
+// ConnError recording ErrTimeout.
+//
+// Typically, a client will reserve a job, perform some work, then delete
+// the job with Conn.Delete.
+func (t *Tube) Reserve(timeout time.Duration) (id uint64, body []byte, err error) {
+    r, err := t.Conn.cmd(t, nil, nil, "reserve-with-timeout", dur(timeout))
+    if err != nil {
+        return 0, nil, err
+    }
+    body, err = t.Conn.readResp(r, true, "RESERVED %d", &id)
+    if err != nil {
+        return 0, nil, err
+    }
+    return id, body, nil
+}
+
+// Delete deletes the given job.
+func (t *Tube) Delete(id uint64) error {
+    r, err := t.Conn.cmd(t, nil, nil, "delete", id)
+    if err != nil {
+        return err
+    }
+    _, err = t.Conn.readResp(r, false, "DELETED")
+    return err
 }
