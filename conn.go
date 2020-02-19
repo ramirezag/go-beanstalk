@@ -101,6 +101,7 @@ func (c *Conn) adjustTubes(t *Tube, ts *TubeSet) error {
 			return err
 		}
 		c.printLine("use", t.Name)
+        c.printLine("watch", t.Name)
 		c.used = t.Name
 	}
 	if ts != nil {
