@@ -83,6 +83,18 @@ func (t *Tube) Kick(bound int) (n int, err error) {
 	return n, nil
 }
 
+func (t *Tube) KickJob(jobId uint64) (err error) {
+	r, err := t.Conn.cmd(t, nil, nil, "kick-job", jobId)
+	if err != nil {
+		return err
+	}
+	_, err = t.Conn.readResp(r, false, "KICKED")
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // Stats retrieves statistics about tube t.
 func (t *Tube) Stats() (map[string]string, error) {
 	r, err := t.Conn.cmd(t, nil, nil, "stats-tube", t.Name)
